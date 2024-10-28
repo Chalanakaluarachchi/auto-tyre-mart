@@ -3,13 +3,13 @@ import React from 'react';
 
 const ProductCard = ({ product }) => {
   return (
-    <div className="bg-white border rounded-lg shadow-md p-4 m-2 flex flex-col items-center w-64 h-80"> {/* Fixed size */}
+    <div className="bg-white border rounded-lg shadow-md p-4 m-2 flex flex-col items-center lg:w-52 xl:w-48 2xl:w-56 2xl:h-full md:w-36 md:h-full gap-2"> {/* Fixed size */}
       <img 
         src={product.image} 
         alt={`${product.brand} ${product.tyreType}`} 
         className="w-full h-40 object-cover mb-2 rounded" 
       />
-      <h3 className="text-lg font-semibold text-center">{product.tyreType} - {product.brand}</h3>
+      <h3 className="lg:text-lg md:text-md font-semibold text-center">{product.tyreType} - {product.brand}</h3>
       <p className="text-center">{product.width}/{product.height}R{product.diameter}</p>
       <p className="text-gray-700">Rs. {product.price}</p>
       {product.inStock ? (

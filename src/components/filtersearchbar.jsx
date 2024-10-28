@@ -31,9 +31,9 @@ const FilterSearchBar = ({ onSearch }) => {
     }
   };
 
-  // Reset filters to default values
+  // Reset filters to default values and refresh the product list
   const handleClear = () => {
-    setFilters({
+    const defaultFilters = {
       tyreType: '',
       brand: '',
       width: '',
@@ -45,11 +45,14 @@ const FilterSearchBar = ({ onSearch }) => {
       speedRating: '',
       minPrice: '',
       maxPrice: ''
-    });
+    };
+    
+    setFilters(defaultFilters);
+    onSearch(defaultFilters); // Refresh product list
   };
 
   return (
-    <div className="bg-gray-100 p-4 w-96 rounded-md shadow-md">
+    <div className="bg-gray-100 p-4 w-auto h-full rounded-md shadow-md">
       <h2 className="text-lg font-semibold mb-4 flex items-center">
         <span className="material-icons mr-2">Tyre</span> Filters
       </h2>
