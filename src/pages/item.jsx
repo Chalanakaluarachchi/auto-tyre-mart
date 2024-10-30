@@ -1,42 +1,36 @@
 // ItemPage.jsx
 import React, { useState, useEffect } from 'react';
-import FilterSearchBar from '../components/filtersearchbar';
-import ProductCard from '../components/product-card';
-import products from '../config/data.json';
+import ProductCard from '../components/product-card'; // Ensure the correct import path
 import '../fade.css';
 
 const ItemPage = () => {
-  const [filteredProducts, setFilteredProducts] = useState(products);
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(getItemsPerPage(window.innerWidth)); // Get initial items per page
+  const [itemsPerPage, setItemsPerPage] = useState(getItemsPerPage(window.innerWidth));
 
   // Function to determine items per page based on screen width
   function getItemsPerPage(width) {
-    if (width >= 1024) return 12; // Large screens
-    if (width >= 768) return 6;   // Medium screens
-    return 4;                     // Small screens
+    if (width >= 1024) return 15;
+    if (width >= 768) return 6;
+    return 4;
   }
 
-  // Handle search functionality
-  const handleSearch = (filters) => {
-    const filtered = products.filter((product) => {
-      return (
-        (filters.tyreType ? product.tyreType === filters.tyreType : true) &&
-        (filters.brand ? product.brand === filters.brand : true) &&
-        (filters.width ? product.width === filters.width : true) &&
-        (filters.height ? product.height === filters.height : true) &&
-        (filters.diameter ? product.diameter === filters.diameter : true) &&
-        (filters.manufacture ? product.manufacture === filters.manufacture : true) &&
-        (filters.model ? product.model === filters.model : true) &&
-        (filters.loadIndex ? product.loadIndex === filters.loadIndex : true) &&
-        (filters.speedRating ? product.speedRating === filters.speedRating : true) &&
-        (filters.minPrice ? product.price >= filters.minPrice : true) &&
-        (filters.maxPrice ? product.price <= filters.maxPrice : true)
-      );
-    });
-    setFilteredProducts(filtered);
-    setCurrentPage(1); // Reset to first page when searching
-  };
+  // Fetch products from PHP API
+  useEffect(() => {
+    fetch('http://localhost/db.php')
+      .then(response => response.json())
+      .then(data => {
+        // Ensure prices are numbers
+        const formattedData = data.map(product => ({
+          ...product,
+          price: Number(product.price) // Ensure price is a number
+        }));
+        setFilteredProducts(formattedData);
+      })
+      .catch(error => console.error('Error fetching products:', error));
+  }, []);
 
   // Pagination Logic
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
@@ -51,8 +45,8 @@ const ItemPage = () => {
   // Effect to handle window resize and adjust items per page
   useEffect(() => {
     const handleResize = () => {
-      setItemsPerPage(getItemsPerPage(window.innerWidth)); // Update items per page on resize
-      setCurrentPage(1); // Reset to first page on resize
+      setItemsPerPage(getItemsPerPage(window.innerWidth));
+      setCurrentPage(1);
     };
 
     window.addEventListener('resize', handleResize);
@@ -61,15 +55,75 @@ const ItemPage = () => {
     };
   }, []);
 
+  // Handle search input change for suggestions
+  const handleSearchInput = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+
+    if (value) {
+      const matchingSuggestions = filteredProducts.filter(product =>
+        product.description && product.description.toLowerCase().includes(value.toLowerCase())
+      ).slice(0, 5); // Limit suggestions to top 5 matches
+      setSuggestions(matchingSuggestions);
+    } else {
+      setSuggestions([]);
+    }
+  };
+
+  // Execute search on button click
+  const handleSearch = () => {
+    const filtered = filteredProducts.filter(product =>
+      product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredProducts(filtered);
+    setCurrentPage(1);
+    setSuggestions([]);
+  };
+
   return (
-    <div className='h-full'>
-      <div className="flex flex-col md:flex-row">
-        <div className='md:w-1/3'>
-          <FilterSearchBar onSearch={handleSearch} />
+    <div className="h-svh">
+      {/* Search Bar */}
+      <div className="flex justify-center items-center mt-4">
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={handleSearchInput}
+          placeholder="Search products..."
+          className="px-4 py-2 border rounded-l-md"
+        />
+        <button
+          onClick={handleSearch}
+          className="px-4 py-2 bg-blue-500 text-white rounded-r-md"
+        >
+          Search
+        </button>
+      </div>
+
+      {/* Suggestions */}
+      {suggestions.length > 0 && (
+        <div className="flex justify-center">
+          <ul className="bg-white border mt-2 rounded-md w-1/2">
+            {suggestions.map(suggestion => (
+              <li
+                key={suggestion.id}
+                onClick={() => {
+                  setSearchTerm(suggestion.description);
+                  handleSearch();
+                }}
+                className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
+              >
+                {suggestion.description}
+              </li>
+            ))}
+          </ul>
         </div>
-        <div className="flex flex-wrap justify-center md:justify-start mt-4 md:mt-0 md:w-2/3">
+      )}
+
+      {/* Product List */}
+      <div className="flex flex-col md:flex-row mx-4">
+        <div className="flex flex-wrap justify-center md:justify-center mt-4 md:mt-0 md:w-full">
           {currentItems.map((product, index) => (
-            <div key={product.id} className={`animate-fadeIn mt-4`} style={{ animationDelay: `${index * 0.1}s` }}>
+            <div key={product.id} className="animate-fadeIn mt-4" style={{ animationDelay: `${index * 0.1}s` }}>
               <ProductCard product={product} />
             </div>
           ))}
@@ -77,7 +131,7 @@ const ItemPage = () => {
       </div>
 
       {/* Pagination Controls */}
-      <div className="flex justify-end mt-6 mx-16 mb-6">
+      <div className="flex justify-center mt-6 mx-16 mb-6">
         <button
           onClick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage === 1}

@@ -20,7 +20,7 @@ const Home = () => {
         </h1>
         <Link to="/items"> {/* Link to item page */}
           <button className="mt-4 px-6 py-3 bg-white text-black font-semibold rounded-md hover:bg-gray-800 hover:text-white transition duration-300">
-            Go to Shop
+           Search Items
           </button>
         </Link>
       </div>
