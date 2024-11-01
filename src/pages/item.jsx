@@ -1,10 +1,10 @@
-// ItemPage.jsx
 import React, { useState, useEffect } from 'react';
 import ProductCard from '../components/product-card'; // Ensure the correct import path
 import '../fade.css';
 
 const ItemPage = () => {
-  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [products, setProducts] = useState([]); // Original product list
+  const [filteredProducts, setFilteredProducts] = useState([]); // Filtered product list for display
   const [searchTerm, setSearchTerm] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -22,15 +22,28 @@ const ItemPage = () => {
     fetch('http://localhost/db.php')
       .then(response => response.json())
       .then(data => {
-        // Ensure prices are numbers
         const formattedData = data.map(product => ({
           ...product,
           price: Number(product.price) // Ensure price is a number
         }));
-        setFilteredProducts(formattedData);
+        setProducts(formattedData); // Set original product list
+        setFilteredProducts(formattedData); // Initialize filtered list to show all products
       })
       .catch(error => console.error('Error fetching products:', error));
   }, []);
+
+  // Update filtered products whenever search term changes
+  useEffect(() => {
+    if (searchTerm) {
+      const filtered = products.filter(product =>
+        product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredProducts(filtered);
+    } else {
+      setFilteredProducts(products); // Reset to full list if search term is empty
+    }
+    setCurrentPage(1); // Reset to first page on new search
+  }, [searchTerm, products]);
 
   // Pagination Logic
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
@@ -55,29 +68,19 @@ const ItemPage = () => {
     };
   }, []);
 
-  // Handle search input change for suggestions
+  // Handle search input change for suggestions and dynamic search
   const handleSearchInput = (e) => {
     const value = e.target.value;
     setSearchTerm(value);
 
     if (value) {
-      const matchingSuggestions = filteredProducts.filter(product =>
+      const matchingSuggestions = products.filter(product =>
         product.description && product.description.toLowerCase().includes(value.toLowerCase())
       ).slice(0, 5); // Limit suggestions to top 5 matches
       setSuggestions(matchingSuggestions);
     } else {
       setSuggestions([]);
     }
-  };
-
-  // Execute search on button click
-  const handleSearch = () => {
-    const filtered = filteredProducts.filter(product =>
-      product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredProducts(filtered);
-    setCurrentPage(1);
-    setSuggestions([]);
   };
 
   return (
@@ -92,7 +95,7 @@ const ItemPage = () => {
           className="px-4 py-2 border rounded-l-md"
         />
         <button
-          onClick={handleSearch}
+          onClick={() => setSearchTerm(searchTerm)} // Trigger search with current term
           className="px-4 py-2 bg-blue-500 text-white rounded-r-md"
         >
           Search
@@ -107,8 +110,7 @@ const ItemPage = () => {
               <li
                 key={suggestion.id}
                 onClick={() => {
-                  setSearchTerm(suggestion.description);
-                  handleSearch();
+                  setSearchTerm(suggestion.description); // Set selected suggestion as search term
                 }}
                 className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
               >
